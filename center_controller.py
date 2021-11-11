@@ -58,7 +58,7 @@ class CenterController:
         # 标识开始poc测试
         self.POC_SCAN_STATUS = 2
         # 加载 poc.py文件
-        poc = importlib.import_module('poc')
+        poc = importlib.import_module('poc_gitlib_cve_2021_22205')
         # 创建一个 10 个线程的线程池
         pool = ThreadPoolExecutor(max_workers=10)
         # 建立 10 个线程
@@ -74,23 +74,23 @@ class CenterController:
             # 如果目标 队列空了，而且输入还结束了，那就说明结束了啊
             if self.target_queue.empty() and self.INPUT_STATUS == 3:
                 break
-            else:
-                # 如果程序没结束呢，先等等再继续
-                time.sleep(0.5)
             # 设置一个标志位
             th_flag = -1
             # 循环判断是不是有的线程挂掉了
             for i in range(10):
                 if not th_list[i].is_alive():
                     th_flag = i
-                    print("线程挂了", th_flag)
+                    # print("线程挂了", th_flag)
             # 如果那个线程挂了 ，从新起来一个
-            th_list.pop(th_flag)
-            th = threading.Thread(target=poc.poc, args=(self.target_queue, self.result_queue))
-            th.setDaemon(True)
-            th.start()
-            th_list.append(th)
-            time.sleep(0.5)
+            if th_flag != -1:
+                th_list.pop(th_flag)
+                th = threading.Thread(target=poc.poc, args=(self.target_queue, self.result_queue))
+                th.setDaemon(True)
+                th.start()
+                th_list.append(th)
+            # 如果没有线程挂掉，那就休息0.1
+            else:
+                time.sleep(0.1)
         self.POC_SCAN_STATUS = 3  # 验证结束了
         # print("完成poc验证")
         # print(time.time(), "完成poc验证")
@@ -98,6 +98,7 @@ class CenterController:
     def start_result_output(self):
         # print(time.time(), "开始输出")
         flag = 0
+        result_file = open('result.txt', encoding='utf-8', mode='a')
         while True:
             if self.result_queue.empty():
                 time.sleep(1)
@@ -106,13 +107,16 @@ class CenterController:
                 flag += 1
                 show_line = "正在验证：【 " + str((flag / self.target_len) * 100)[:4] + "%" +" 】" + \
                             "【 " + result['is_vuln'] + " 】" + result['target']
-
                 print(show_line)
+                if result['is_vuln'] == 'true':
+                    result_file.write(show_line+'\n')
+                    result_file.flush()
             # 如果验证结束了 且 输出的数量够的
             if self.POC_SCAN_STATUS == 3 and flag == self.target_len:
                 break
         self.OUTPUT_STATUS = 3
         self.RUN_STATUS = 2
+        result_file.close()
         # print("完成结果输出")
         # print(time.time(), "完成结果输出")
 
@@ -124,6 +128,9 @@ class CenterController:
         while True:
             if self.RUN_STATUS == 2:
                 break
+            else:
+                # print("线程数量", threading.active_count())
+                time.sleep(0.5)
         # print("验证完成，程序退出")
         exit("全部结束")
 
