@@ -80,6 +80,7 @@ class CenterController:
             for i in range(30):
                 if not th_list[i].is_alive():
                     th_flag = i
+                    break
                     # print("线程挂了", th_flag)
             # 如果那个线程挂了 ，从新起来一个
             if th_flag != -1:
