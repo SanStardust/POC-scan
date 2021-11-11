@@ -63,7 +63,7 @@ class CenterController:
         pool = ThreadPoolExecutor(max_workers=10)
         # 建立 10 个线程
         th_list = []
-        for i in range(10):
+        for i in range(30):
             # 让他们去跑 poc文件的poc函数去吧, 函数参数传递要注意点，别写错了
             th = threading.Thread(target=poc.poc, args=(self.target_queue, self.result_queue))
             th.setDaemon(True)
@@ -77,7 +77,7 @@ class CenterController:
             # 设置一个标志位
             th_flag = -1
             # 循环判断是不是有的线程挂掉了
-            for i in range(10):
+            for i in range(30):
                 if not th_list[i].is_alive():
                     th_flag = i
                     # print("线程挂了", th_flag)
